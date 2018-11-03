@@ -10,6 +10,8 @@
 # TODO: choose artist?
 # TODO: have it cut off only at the end of a line, otherwise it ends awkwardly on random words
 #		actually should probably just choose number of lines instead of words, keep track of \n's
+# TODO: Maybe not be able to start on a key with a newline. sometimes you end up with the first line
+#		only being one or two words
 
 # TODO: starting word function is currently case sensitive
 # TODO: adlibs (in parentheses) should be treated as one word
