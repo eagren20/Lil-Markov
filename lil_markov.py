@@ -5,10 +5,13 @@
 # Takes a .txt file containing input text as a command line argument
 # and randomly generates text based on the input using a Markov model
 
+# TODO: Use some kind of lyrics api instead of already existing .txt files
 
 # TODO: choose artist?
 # TODO: have it cut off only at the end of a line, otherwise it ends awkwardly on random words
-# TODO: be able to choose the starting word
+#		actually should probably just choose number of lines instead of words, keep track of \n's
+
+# TODO: starting word function is currently case sensitive
 # TODO: adlibs (in parentheses) should be treated as one word
 
 # possible user flow:
@@ -20,6 +23,12 @@
 import sys
 import random
 
+"""
+Generates a Markov model based on args.
+param words: a list of words parsed from the input txt file
+param order: the order of the markov model
+returns: the model (a dictionary)
+"""
 def generateModel(words, order):
 	model = {}
 	for i in range(0, len(words) - order):
@@ -33,6 +42,13 @@ def generateModel(words, order):
 		model[chainLeft].append(chainRight)
 	return model
 
+"""
+Generates a specified amount of output text using a markov model
+param words: the list of words used to make the markov model
+param order: the order of the markov model
+param length: how many words to output
+param start: the word to start the output with, None if no start was specified
+"""
 def generateText(words, order, length, start):
 	#generate model
 	model = generateModel(words, order)
@@ -52,26 +68,25 @@ def generateText(words, order, length, start):
 			if start in k:
 				exists = True
 				break
-		if exists:
-			print('Specified starting word not in text. Picking random start')
+		if not exists:
+			print('\nSpecified starting word not in text. Picking random start')
 		else:
 			# don't know how to do this faster
+			# don't think you want the program to start at the same chain every time
+			# (i guess if the model is very large it's ok cause the output will vary more)
 			# right now just gonna make a copy of the key list and randomly
 			# go through the keys til you find one that has the start word,
 			# and removing the ones that don't
 			
 			key = None
 			while(not key):
-				i = random.randomint(0,len(keyList))
+				i = random.randint(0,len(keyList)-1)
 				if start in list(keyList[i]):
 					key = keyList[i]
 				else:
 					#remove from keyList
 					keyList.pop(i)
 			keyStart = list(key).index(start)
-
-
-			
 
 	# just a padding to see text in command line more clearly
 	print('')
@@ -110,19 +125,7 @@ def generateText(words, order, length, start):
 		key = tuple(key)
 
 	# just a padding to see text in command line more clearly
-	print('')
-
-# process the text so that ad-lib type segments in parentheses will be treated as one word
-# strategy is to replace whitespace in between parentheses with underscores then replace back later
-
-# idk how to do this so for now im just making sure that the markov chain can't start near parentheses.
-# this was causing the most weird output; with a high enough order markov model it will probably just go
-# though the whole sequence inside the parentheses so that shouldn't be a huge issue
-
-# if parentheses aren't closed properly somewhere in the text this will screw everything up so
-# something you could do is have a flag on command line that enables/disables this function
-# def processParens(words):
-
+	print('\n')
 
 # read in txt file, split into list by whitespace
 if len(sys.argv) < 3 or len(sys.argv) > 4:
@@ -134,7 +137,6 @@ length = sys.argv[2]
 start = None
 if len(sys.argv) == 4:
 	start = sys.argv[3]
-	print('\nFYI this function is currently broken\n')
 if not order.isnumeric():
 	print("order number must be a number\nexiting")
 	sys.exit(0)
@@ -161,6 +163,3 @@ f.close()
 
 # output the text
 generateText(words, order, length, start)
-
-
-
