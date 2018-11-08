@@ -48,7 +48,7 @@ def generateModel(words, order):
 Generates a specified amount of output text using a markov model
 param words: the list of words used to make the markov model
 param order: the order of the markov model
-param length: how many words to output
+param length: how many lines to output
 param start: the word to start the output with, None if no start was specified
 """
 def generateText(words, order, length, start):
@@ -58,9 +58,11 @@ def generateText(words, order, length, start):
 	# first select a random chain to start with
 	key = random.choice(list(model.keys()))
 	keyStart = 0
-	#make sure the chain didn't start inside an ad-lib
-	while '(' in ''.join(list(key)) or ')' in ''.join(list(key)):
+	#make sure the chain didn't start inside an ad-lib or newline
+	keyText = ''.join(list(key))
+	while '(' in keyText or ')' in keyText or '\n' in keyText:
 		key = random.choice(list(model.keys()))
+		keyText = ''.join(list(key))
 
 	# start word was specified, find starting point for chain with that word
 	if start:
@@ -93,18 +95,40 @@ def generateText(words, order, length, start):
 	# just a padding to see text in command line more clearly
 	print('')
 
+	# print the relevant words of the starting key
 	for i in range(keyStart, order):
 		word = key[i]
 		#if the next word starts a new line, you don't want to also print a space
 		if (word[len(word)-1] == '\n'):
 			print(word, end = '')
+			length -= 1
+			if length == 0:
+				return
 		else:
 			print(word, end = ' ')
 
 	for i in range(0, length):
+		# print one line
+		key = printLine(model, key)
+
+	# just a padding to see text in command line more clearly
+	print('', end = '\n')
+
+"""
+Prints a line of markov-generated text
+param model: The model to use
+param key: the key to start on
+returns: the key the line ends on
+"""
+def printLine(model, key):
+
+	lastWord = False
+	while not lastWord:
 		# get next word using chain
 		try:
 			nextWord = random.choice(model[key])
+			if ('\n' in nextWord):
+				lastWord = True
 			#if the next word starts a new line, you don't want to also print a space
 			if (nextWord[len(nextWord)-1] == '\n'):
 				print(nextWord, end = '')
@@ -126,14 +150,13 @@ def generateText(words, order, length, start):
 		key.append(nextWord)
 		key = tuple(key)
 
-	# just a padding to see text in command line more clearly
-	print('\n')
+	return key
 
 # read in txt file, split into list by whitespace
 if len(sys.argv) < 3 or len(sys.argv) > 4:
-	print("Run using \"python lil_markov.py *markov chain order* *# of words* *starting word*(optional)\"")
+	print("Run using \"python lil_markov.py [markov chain order[ [# of lines] [starting word (optional)]\"")
 	sys.exit(0)
-#get order number and output size from command line
+#get order/length number and output size from command line
 order = sys.argv[1]
 length = sys.argv[2]
 start = None
@@ -147,6 +170,9 @@ if not length.isnumeric():
 	sys.exit(0)
 order = int(order)
 length = int(length)
+if length < 1:
+	print("the number of lines should be at least 1\nexiting")
+	sys.exit(0)
 
 
 #get list of words sans special characters from txt file
